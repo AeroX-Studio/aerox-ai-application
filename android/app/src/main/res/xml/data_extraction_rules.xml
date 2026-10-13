@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup>
+        <!-- Exclude sensitive auth tokens and cached session data from cloud backups -->
+        <exclude domain="sharedpref" path="flutter.auth_token" />
+        <exclude domain="sharedpref" path="flutter.refresh_token" />
+        <exclude domain="sharedpref" path="flutter.session_cookie" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="flutter.auth_token" />
+        <exclude domain="sharedpref" path="flutter.refresh_token" />
+        <exclude domain="sharedpref" path="flutter.session_cookie" />
+    </device-transfer>
+</data-extraction-rules>

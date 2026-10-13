@@ -1,0 +1,57 @@
+name: aeroxai
+description: "AeroX AI official cross-platform native client for Windows, macOS, Linux, Android, and iOS. Features real-time AI streaming, multi-modal file attachments, camera capture, and native push notifications."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Central Backend Communication & HTTP Streaming
+  http: ^1.2.0
+
+  # Local Persistence for Auth Tokens, Session Cookies, and Device Settings
+  shared_preferences: ^2.2.2
+
+  # Cross-Platform File & Document Selection (Windows, macOS, Linux, Android, iOS)
+  file_picker: ^8.0.0
+
+  # Native Camera Capture & Photo Library Integration
+  image_picker: ^1.0.7
+
+  # Markdown, Code Highlighting, and Rich Text AI Message Rendering
+  flutter_markdown: ^0.7.1
+
+  # Unique Identifier Generation for Local Messages & Conversations
+  uuid: ^4.3.3
+
+  # Internationalization & Timestamp Formatting
+  intl: ^0.19.0
+
+  # Cross-Platform Path Manipulation & MIME Utilities
+  path: ^1.9.0
+
+  # Google Fonts — Quicksand (matching the AeroX web platform typography)
+  google_fonts: ^6.1.0
+
+  # HTTP Media Type Parsing for uploads
+  http_parser: ^4.0.2
+  path_provider: ^2.1.6
+  google_sign_in: ^7.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: Caacupe One
+      fonts:
+        - asset: assets/fonts/caacupe-one.ttf

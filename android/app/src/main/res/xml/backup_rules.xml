@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude sensitive authentication credentials from Android adb / cloud backup -->
+    <exclude domain="sharedpref" path="flutter.auth_token" />
+    <exclude domain="sharedpref" path="flutter.refresh_token" />
+    <exclude domain="sharedpref" path="flutter.session_cookie" />
+</full-backup-content>

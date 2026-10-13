@@ -1,0 +1,20 @@
+# AeroX AI Production Keystore Configuration Template
+# ----------------------------------------------------
+# IMPORTANT: DO NOT COMMIT key.properties OR KEYSTORE FILES TO GIT.
+#
+# To use:
+# 1. Generate or place your production keystore in the android/ directory.
+# 2. Copy this file to android/key.properties.
+# 3. Fill in the parameters below.
+#
+# Note: In CI/CD pipelines (e.g. GitHub Actions, Fastlane), you can alternatively
+# supply these via environment variables:
+#   AEROX_KEYSTORE_PATH
+#   AEROX_KEYSTORE_PASSWORD
+#   AEROX_KEY_ALIAS
+#   AEROX_KEY_PASSWORD
+
+storePassword=YOUR_SECURE_STORE_PASSWORD
+keyPassword=YOUR_SECURE_KEY_PASSWORD
+keyAlias=aerox-release
+storeFile=../aerox-release.keystore
