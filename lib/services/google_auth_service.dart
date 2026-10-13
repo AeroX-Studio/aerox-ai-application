@@ -1,12 +1,24 @@
 /// Native Google OAuth service for AeroX AI native applications.
 ///
-/// Manages Google Sign-In interaction with Google Play Services on Android,
+/// Manages Google Sign-In interaction with Google Play Services on Android and iOS,
 /// retrieving OpenID Connect ID Tokens for AeroX AI backend authentication.
 library;
 
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../config/app_config.dart';
+
+/// Custom exception thrown when native Google authentication encounters
+/// a configuration or platform restriction that necessitates falling back to Web OAuth.
+class GoogleConfigFallbackException implements Exception {
+  final String message;
+  final dynamic cause;
+  const GoogleConfigFallbackException(this.message, [this.cause]);
+
+  @override
+  String toString() => message;
+}
 
 /// Service managing native Google authentication lifecycle and token acquisition.
 class GoogleAuthService {
@@ -17,6 +29,12 @@ class GoogleAuthService {
   GoogleAuthService._internal();
 
   bool _initialized = false;
+
+  /// Returns true if native Google Sign-In SDK is supported on the host OS.
+  bool get isNativeSupported {
+    if (kIsWeb) return true;
+    return Platform.isAndroid || Platform.isIOS;
+  }
 
   Future<void> _ensureInitialized() async {
     if (!_initialized) {
@@ -30,50 +48,86 @@ class GoogleAuthService {
   /// Initiates native Google account selection and retrieves an ID token.
   ///
   /// Returns `null` if the user voluntarily dismissed or cancelled account selection.
-  /// Throws a user-friendly [Exception] on network or configuration errors.
+  /// Throws [GoogleConfigFallbackException] if native sign-in is unsupported or misconfigured,
+  /// prompting an automatic fallback to the browser OAuth bridge.
   Future<String?> getIdToken() async {
+    if (!isNativeSupported) {
+      throw const GoogleConfigFallbackException(
+        'Native Google Sign-In SDK is only available on Android, iOS, and Web. Using browser authentication.',
+      );
+    }
+
     try {
       await _ensureInitialized();
 
-      // Clear any prior cached session so account selection prompt always appears
-      await signOut();
-
-      final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate();
+      // Initiate authentication with required OpenID Connect scopes
+      final GoogleSignInAccount account = await GoogleSignIn.instance.authenticate(
+        scopeHint: const ['email', 'profile', 'openid'],
+      );
 
       final String? idToken = account.authentication.idToken;
 
       if (idToken == null || idToken.trim().isEmpty) {
-        throw Exception(
+        throw const GoogleConfigFallbackException(
           'Google authentication could not acquire a valid security token. '
-          'Please ensure Google Play Services is active on your device.',
+          'Falling back to browser authentication.',
         );
       }
 
       return idToken.trim();
     } on GoogleSignInException catch (e) {
       debugPrint('[GoogleAuthService] GoogleSignInException: ${e.code} - ${e.description}');
+
+      // Check for cancel / interrupt
       if (e.code == GoogleSignInExceptionCode.canceled ||
           e.code == GoogleSignInExceptionCode.interrupted) {
-        // User cancelled account selection
+        final desc = (e.description ?? '').toLowerCase();
+        // If "canceled" was caused by missing credential or developer setup, trigger fallback
+        if (desc.contains('credential') ||
+            desc.contains('developer') ||
+            desc.contains('10') ||
+            desc.contains('12500')) {
+          throw GoogleConfigFallbackException(
+            'Google Sign-In configuration error on device. Switching to browser authentication.',
+            e,
+          );
+        }
+        // Genuine user cancellation
         return null;
       }
+
       if (e.code == GoogleSignInExceptionCode.uiUnavailable) {
-        throw Exception('Google Sign-In UI is currently unavailable. Please try again.');
+        throw GoogleConfigFallbackException(
+          'Google Sign-In UI is unavailable on this device. Switching to browser authentication.',
+          e,
+        );
       }
-      throw Exception('Google Sign-In error: ${e.description ?? e.code.name}');
+
+      // Any other GoogleSignInException (developerError, etc.) triggers fallback
+      throw GoogleConfigFallbackException(
+        'Google Sign-In notice: ${e.description ?? e.code.name}. Switching to browser authentication.',
+        e,
+      );
     } catch (e) {
       debugPrint('[GoogleAuthService] Unexpected error: $e');
+      if (e is GoogleConfigFallbackException) rethrow;
+
       final msg = e.toString().toLowerCase();
-      if (msg.contains('cancel') || msg.contains('interrupted')) {
+      if (msg.contains('cancel') && !msg.contains('credential')) {
         return null;
       }
-      if (e is Exception) rethrow;
-      throw Exception('Unexpected error during Google Sign-In: $e');
+
+      // Unknown or platform channel errors trigger fallback
+      throw GoogleConfigFallbackException(
+        'Native Google Sign-In encountered an issue: $e. Switching to browser authentication.',
+        e,
+      );
     }
   }
 
   /// Clears any cached Google account state on the local device.
   Future<void> signOut() async {
+    if (!isNativeSupported) return;
     try {
       await _ensureInitialized();
       await GoogleSignIn.instance.signOut();

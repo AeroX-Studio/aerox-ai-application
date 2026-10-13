@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/app_config.dart';
+import 'secure_storage_service.dart';
 
 /// Singleton client managing network requests and real-time streaming connections.
 class ApiService {
@@ -51,8 +52,11 @@ class ApiService {
       await prefs.remove('aerox_custom_server_url');
     }
 
-    _sessionCookie = prefs.getString('aerox_session_cookie');
-    _sessionToken = prefs.getString('aerox_session_token');
+    final secureStorage = SecureStorageService();
+    await secureStorage.init();
+
+    _sessionCookie = await secureStorage.getSessionCookie();
+    _sessionToken = await secureStorage.getSessionToken();
   }
 
   /// Tests network connectivity to the official AeroX AI production backend.
@@ -110,16 +114,16 @@ class ApiService {
   /// Providing a non-null [cookie] or [token] updates that value without
   /// inadvertently erasing the other credential.
   Future<void> setSession({String? cookie, String? token}) async {
-    final prefs = await SharedPreferences.getInstance();
+    final secureStorage = SecureStorageService();
 
     if (cookie != null) {
       _sessionCookie = cookie;
-      await prefs.setString('aerox_session_cookie', cookie);
+      await secureStorage.saveSessionCookie(cookie);
     }
 
     if (token != null) {
       _sessionToken = token;
-      await prefs.setString('aerox_session_token', token);
+      await secureStorage.saveSessionToken(token);
     }
   }
 
@@ -127,9 +131,8 @@ class ApiService {
   Future<void> clearSession() async {
     _sessionCookie = null;
     _sessionToken = null;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('aerox_session_cookie');
-    await prefs.remove('aerox_session_token');
+    final secureStorage = SecureStorageService();
+    await secureStorage.clearAll();
   }
 
   Map<String, String> _buildHeaders({Map<String, String>? extra}) {

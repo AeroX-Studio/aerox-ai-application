@@ -200,7 +200,10 @@ class _SplashScreenState extends State<SplashScreen>
 
       final isAuthenticated = await AuthService()
           .restoreSession()
-          .timeout(const Duration(seconds: 2), onTimeout: () => false);
+          .timeout(
+            const Duration(seconds: 4),
+            onTimeout: () => AuthService().isAuthenticated,
+          );
 
       if (!mounted) return;
 

@@ -41,6 +41,8 @@ dependencies:
   http_parser: ^4.0.2
   path_provider: ^2.1.6
   google_sign_in: ^7.2.0
+  flutter_secure_storage: ^10.3.4
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:
